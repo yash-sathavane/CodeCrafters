@@ -22,10 +22,26 @@ app.use(express.static(path.join(__dirname,"/public")));
 const flash=require("connect-flash");
 const session=require("express-session");
 
+const MongoStore = require('connect-mongo');
+
 const ejsMate=require("ejs-mate");
 app.engine("ejs",ejsMate);
 
+const dbUrl=process.env.ATLASDB_URL;
+const store=MongoStore.create({
+    mongoUrl:dbUrl,
+    crypto: {
+        secret: "mysupersecretstring"
+      },
+      touchAfter:24*3600,
+})
+
+store.on("error",()=>{
+    console.log("ERROR IN MOngo session store",err);
+})
+
 const sessionOption={
+    store,
     secret:"mysupersecretstring",
     resave:false,
     saveUninitialized:true,
@@ -79,9 +95,9 @@ app.use("/",userRoute);
 //     res.send(registeredUser);
 // })
 
-const mongo_url="mongodb://127.0.0.1:27017/codeCrafters";
+// const mongo_url="mongodb://127.0.0.1:27017/codeCrafters";
 async function main(){
-    await mongoose.connect(mongo_url);
+    await mongoose.connect(dbUrl);
 }
 main().then(()=>{
     console.log("connected to DB.");
